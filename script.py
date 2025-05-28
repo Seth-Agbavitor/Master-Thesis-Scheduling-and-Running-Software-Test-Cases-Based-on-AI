@@ -485,7 +485,7 @@ def fetch_test_run_results(test_run_id, test_points):
             print(f"Test Case ID: {test_case_id}; Point ID: {test_point_id}; Name: {test_case_name}, Assigned Agents: {agents_str}")
             print(f"     → Status: {outcome.upper()}, Executed on: {agent_name}, Execution Time: {execution_time:.2f} sec")
         print("✔ Test Run Results Fetched Successfully!")
-        upload_test_results_to_cosmos(test_run_id, response_json)
+        #upload_test_results_to_cosmos(test_run_id, response_json)
         return response_json
     else:
         print(f"❌ Failed to fetch test results. Status Code: {response.status_code}")
