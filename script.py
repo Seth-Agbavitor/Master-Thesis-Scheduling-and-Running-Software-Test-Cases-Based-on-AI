@@ -12,6 +12,32 @@ from datetime import datetime, timedelta
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
+from azure.cosmos import CosmosClient, PartitionKey
+import uuid
+
+# Cosmos DB settings
+COSMOS_URI = "https://robotarm-cosmosdb.documents.azure.com:443/" 
+COSMOS_KEY = "XFTBU2Zs8inOM58z5ZDAlPyWxAoyqaZ8eYgEIocwOuQuLxsGzHukS6sdtDUE7RKyEOpaNsMIr7PVACDb0T8b5g=="
+COSMOS_DB = "TestResultsDB"
+COSMOS_CONTAINER = "Results"
+
+# Create client and container on first use
+cosmos_client = CosmosClient(COSMOS_URI, credential=COSMOS_KEY)
+cosmos_db = cosmos_client.create_database_if_not_exists(id=COSMOS_DB)
+cosmos_container = cosmos_db.create_container_if_not_exists(
+    id=COSMOS_CONTAINER,
+    partition_key=PartitionKey(path="/testRunId"),
+    offer_throughput=400
+)
+
+def upload_test_results_to_cosmos(test_run_id, response_json):
+    for result in response_json.get("value", []):
+        result["id"] = str(uuid.uuid4())  # Cosmos requires 'id' field
+        result["testRunId"] = str(test_run_id)  # for partitioning and querying
+        result["uploadTimestamp"] = datetime.utcnow().isoformat()
+        cosmos_container.create_item(body=result)
+    print(f"✔ Uploaded {len(response_json['value'])} results to Cosmos DB (TestRun {test_run_id})")
+
 
 
 # Azure DevOps Configuration
@@ -454,6 +480,7 @@ def fetch_test_run_results(test_run_id, test_points):
             print(f"Test Case ID: {test_case_id}; Point ID: {test_point_id}; Name: {test_case_name}, Assigned Agents: {agents_str}")
             print(f"     → Status: {outcome.upper()}, Executed on: {agent_name}, Execution Time: {execution_time:.2f} sec")
         print("✔ Test Run Results Fetched Successfully!")
+        upload_test_results_to_cosmos(test_run_id, response_json)
         
     else:
         print(f"❌ Failed to fetch test results. Status Code: {response.status_code}")
