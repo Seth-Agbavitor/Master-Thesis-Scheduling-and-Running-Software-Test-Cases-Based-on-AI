@@ -278,7 +278,7 @@ def trigger_new_build():
     timeout = timedelta(minutes=5)
     start = datetime.now()
     while True:
-        time.sleep(20)
+        time.sleep(10)
         build_status_resp = requests.get(build_status_url, headers=HEADERS)
         if build_status_resp.status_code != 200:
             print("❌ Failed to check build status")
@@ -411,62 +411,67 @@ def monitor_release_and_tests(release_id, test_run_id, test_points):
     test_run_url = f"https://dev.azure.com/{AZURE_ORG}/{PROJECT}/_apis/test/runs/{test_run_id}?api-version=7.1"
     print(f"Release Pipeline ({release_id}) API: {release_url}")
     print(f"Test Run ({test_run_id}) API: {test_run_url}")
-    timeout = timedelta(minutes=3)          # Set timeout for monitoring
+    
+    timeout = timedelta(minutes=10)
     start_time = datetime.now()
     completed_stages = set()
     test_run_completed = False
+    result_json = None
+
     while True:
-        # Fetch release status
+        # Check release status
         release_response = requests.get(release_url, headers=HEADERS)
         if release_response.status_code == 200:
-            release_json = release_response.json()
-            release_status = release_json.get("status", "Unknown").lower()
-            for env in release_json.get("environments", []):
-                env_name = env.get("name", "Unknown")
-                env_status = env.get("status", "Unknown")
+            release_data = release_response.json()
+            for env in release_data.get("environments", []):
+                env_name = env.get("name")
+                env_status = env.get("status")
                 if env_name not in completed_stages and env_status in ["succeeded", "failed", "canceled", "rejected"]:
                     print(f"Stage: {env_name} → Status: {env_status.upper()}")
                     completed_stages.add(env_name)
-            if len(completed_stages) == len(release_json.get("environments", [])):
+            if len(completed_stages) == len(release_data.get("environments", [])):
                 print("All Stages Completed!")
                 break
         else:
             print(f"❌ Failed to fetch release status. Status Code: {release_response.status_code}")
             print("Response:", release_response.text)
             break
-        # Fetch test run status
+
+        # Check test run status
         if not test_run_completed:
             test_response = requests.get(test_run_url, headers=HEADERS)
             if test_response.status_code == 200:
                 test_json = test_response.json()
-                test_run_status = test_json.get("state", "Unknown")
+                test_run_status = test_json.get("state")
                 if test_run_status in ["Completed", "Aborted", "Failed"]:
                     print(f"Test Run ID {test_run_id} → Status: {test_run_status.upper()}")
                     test_run_completed = True
-                    # Fetch and print detailed test results
-                    fetch_test_run_results(test_run_id, test_points)
+                    # Fetch test results
+                    result_json = fetch_test_run_results(test_run_id, test_points)
             else:
                 print(f"❌ Failed to fetch test run status. Status Code: {test_response.status_code}")
                 print("Response:", test_response.text)
-        # Timeout check
+
         if datetime.now() - start_time > timeout:
-            print("⚠ Timeout reached! Some stages or tests are still running.\n")
+            print("⚠ Timeout reached! Some stages or tests are still running.")
             break
-        time.sleep(10)
-# Fetch Test Run Results
+
+        time.sleep(20)
+
+    return result_json
+
 def fetch_test_run_results(test_run_id, test_points):
     url = f"https://dev.azure.com/{AZURE_ORG}/{PROJECT}/_apis/test/Runs/{test_run_id}/results?api-version=7.1"
     print(f"Fetching Test Results from: {url}")
     response = requests.get(url, headers=HEADERS)
     if response.status_code == 200:
         response_json = response.json()
-        print(f"Test Run ({test_run_id}) Results :")
+        print(f"Test Run ({test_run_id}) Results:")
         for result in response_json.get("value", []):
             test_case_id = result.get("testCase", {}).get("id", "Unknown Test Case ID")
-            outcome = result.get("outcome", "Unknown")  # Pass / Fail / NotExecuted
-            agent_name = result.get("computerName", "Unknown Agent")  # Fetch Agent Name
-            execution_time = round(result.get("durationInMs", 0) / 1000, 2)  # Convert ms to seconds
-            # Find the test case name, test point ID, and assigned agents using test_case_id
+            outcome = result.get("outcome", "Unknown")
+            agent_name = result.get("computerName", "Unknown Agent")
+            execution_time = round(result.get("durationInMs", 0) / 1000, 2)
             test_case_name = "Unknown Test Case"
             test_point_id = "Unknown Point ID"
             assigned_agents = []
@@ -481,10 +486,11 @@ def fetch_test_run_results(test_run_id, test_points):
             print(f"     → Status: {outcome.upper()}, Executed on: {agent_name}, Execution Time: {execution_time:.2f} sec")
         print("✔ Test Run Results Fetched Successfully!")
         upload_test_results_to_cosmos(test_run_id, response_json)
-        
+        return response_json
     else:
         print(f"❌ Failed to fetch test results. Status Code: {response.status_code}")
         print("Response:", response.text)
+        return None
 
 
 ### **Main Execution Flow**
@@ -575,11 +581,17 @@ if __name__ == "__main__":
         manually_start_correct_stage(release_id, agent_name)
 
 
-    print("\nStep 12: Monitoring Each Release and Test Run Execution...")
-    for test_run_id, release_id in release_ids.items():
-        print(f"▶ Monitoring Release {release_id} for Test Run {test_run_id}...")
-        monitor_release_and_tests(release_id, test_run_id, test_points)
+    all_test_results = {}
 
+for test_run_id, release_id in release_ids.items():
+    print(f"▶ Monitoring Release {release_id} for Test Run {test_run_id}...")
+    result_json = monitor_release_and_tests(release_id, test_run_id, test_points)
+    if result_json:
+        all_test_results[test_run_id] = result_json
+
+print("\nStep 13: Uploading All Test Results to Cosmos DB...")
+for test_run_id, result_json in all_test_results.items():
+    upload_test_results_to_cosmos(test_run_id, result_json)
 
     print("✔ Test execution completed!")
     
