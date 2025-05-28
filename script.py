@@ -25,11 +25,11 @@ POOL_ID = 11                           # Agent Pool ID
 POOL_NAME = "Autobots"                  # Agent Pool Name
 BUILD_PIPELINE_ID = 3                   # Build Pipeline ID
 RELEASE_PIPELINE_ID = 1                 # Release Pipeline ID
-ARTIFACT_ALIAS = "_PaintRobotSimulator(3)"    # Artifact Alias in Release Pipeline
+ARTIFACT_ALIAS = "drop"    # Artifact Alias in Release Pipeline
 AGENT_01 = "Autobot1"                   # Agent Name 1
 AGENT_02 = "Autobot2"                   # Agent Name 2
 AGENT_03 = "Autobot3"                   # Agent Name 3
-TARGET_STAGE_01 = "Autobot1 Stage "      # Target Stage for Agent 1
+TARGET_STAGE_01 = "Autobot1 Stage"      # Target Stage for Agent 1
 TARGET_STAGE_02 = "Autobot2 Stage"      # Target Stage for Agent 2
 TARGET_STAGE_03 = "Autobot3 Stage"      # Target Stage for Agent 3
 
@@ -252,7 +252,7 @@ def trigger_new_build():
     timeout = timedelta(minutes=5)
     start = datetime.now()
     while True:
-        time.sleep(10)
+        time.sleep(20)
         build_status_resp = requests.get(build_status_url, headers=HEADERS)
         if build_status_resp.status_code != 200:
             print("❌ Failed to check build status")
@@ -341,15 +341,14 @@ def trigger_release(build_id, test_run_id, target_stage, is_agent_available):
 def manually_start_correct_stage(release_id, agent_name):
     environments = get_release_environments(release_id)
     for env in environments:
-        env_name = env["name"].strip()  # 👈 Strip whitespace from environment name
-        if agent_name == AGENT_01 and env_name == TARGET_STAGE_01:
+        if agent_name == AGENT_01 and env["name"] == TARGET_STAGE_01:
             deploy_environment(release_id, env["id"], env["name"])
-        elif agent_name == AGENT_02 and env_name == TARGET_STAGE_02:
+        elif agent_name == AGENT_02 and env["name"] == TARGET_STAGE_02:
             deploy_environment(release_id, env["id"], env["name"])
-        elif agent_name == AGENT_03 and env_name == TARGET_STAGE_03:
+        elif agent_name == AGENT_03 and env["name"] == TARGET_STAGE_03:
             deploy_environment(release_id, env["id"], env["name"])
         else:
-            print(f"⏭ Skipping stage '{env['name']}' for agent '{agent_name}' (not required)")
+            print(f"⏭ Skipping stage '{env['name']}' for agent '{agent_name}' (not required)")   
   
 # To get Environment Variables from a Release
 def get_release_environments(release_id):
@@ -427,7 +426,7 @@ def monitor_release_and_tests(release_id, test_run_id, test_points):
         if datetime.now() - start_time > timeout:
             print("⚠ Timeout reached! Some stages or tests are still running.\n")
             break
-        time.sleep(20)
+        time.sleep(10)
 # Fetch Test Run Results
 def fetch_test_run_results(test_run_id, test_points):
     url = f"https://dev.azure.com/{AZURE_ORG}/{PROJECT}/_apis/test/Runs/{test_run_id}/results?api-version=7.1"
