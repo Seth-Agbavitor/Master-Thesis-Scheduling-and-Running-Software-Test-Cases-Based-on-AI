@@ -11,6 +11,8 @@ import time
 from datetime import datetime, timedelta
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
+start_time_script = time.time()
+
 
 from azure.cosmos import CosmosClient, PartitionKey
 import uuid
@@ -519,6 +521,28 @@ if __name__ == "__main__":
         print("❌ No Test Points found! Exiting.")
         exit()
 
+
+    # 🔽 NEW: Filter test points using scheduled_tests.csv
+    import pandas as pd
+    scheduled_df = pd.read_csv("CosmosDB/scheduled_tests_cp_sat.csv")
+    scheduled_ids = scheduled_df["testCase_id"].astype(str).tolist()
+
+    # Keep only test points whose testCaseId is in the scheduled list
+    filtered_test_points = {
+        pid: (tcid, name, agents)
+        for pid, (tcid, name, agents) in test_points.items()
+        if str(tcid) in scheduled_ids
+    }
+
+    if not filtered_test_points:
+        print("❌ No test points matched scheduled test cases. Exiting.")
+        exit()
+    else:
+        print(f"✅ Filtered to {len(filtered_test_points)} scheduled test points.")
+
+    test_points = filtered_test_points  # Use only filtered test points
+#####################################################################
+
     print("\nStep 05: Fetching Available Agent Pools and Agents...")
     selected_pool_name = get_agent_pool(POOL_ID)
     if not selected_pool_name:
@@ -594,4 +618,8 @@ for test_run_id, result_json in all_test_results.items():
     upload_test_results_to_cosmos(test_run_id, result_json)
 
     print("✔ Test execution completed!")
+    end_time_script = time.time()
+    total_runtime = end_time_script - start_time_script
+    print(f"\n⏱ Total Script Runtime: {total_runtime:.2f} seconds")
+
     

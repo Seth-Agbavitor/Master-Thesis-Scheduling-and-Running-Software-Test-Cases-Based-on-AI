@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SimPaintRobotTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f5a9fdf599b6333e08f93d8fba65669c9a124405")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6bc0edeaf83994d4fdb607ceaeeac071287f7301")]
 [assembly: System.Reflection.AssemblyProductAttribute("SimPaintRobotTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SimPaintRobotTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
