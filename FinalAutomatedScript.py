@@ -1,7 +1,7 @@
-### Create Two Seperate Test Runs for Different TestCases based on Agents ✅
-### Trigger Two Release ✅
-### Launch Different Stages in Each Release ✅
-### Use Different Agents for Different Stages ✅
+### Create Three Seperate Test Runs for Different TestCases based on Agents 
+### Trigger Three Release 
+### Launch Different Stages in Each Release 
+### Use Different Agents for Different Stages 
 ### Log Files Should be added
 
 import requests
@@ -524,7 +524,7 @@ if __name__ == "__main__":
 
     # 🔽 NEW: Filter test points using scheduled_tests.csv
     import pandas as pd
-    scheduled_df = pd.read_csv("CosmosDB/scheduled_tests_cp_sat2.csv")
+    scheduled_df = pd.read_csv("CosmosDB/scheduled_tests_cp_sat.csv")
     scheduled_ids = scheduled_df["testCase_id"].astype(str).tolist()
 
     # Keep only test points whose testCaseId is in the scheduled list
