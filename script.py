@@ -16,8 +16,8 @@ from azure.cosmos import CosmosClient, PartitionKey
 import uuid
 
 # Cosmos DB settings
-COSMOS_URI = "https://robotarm-cosmosdb.documents.azure.com:443/" 
-COSMOS_KEY = "XFTBU2Zs8inOM58z5ZDAlPyWxAoyqaZ8eYgEIocwOuQuLxsGzHukS6sdtDUE7RKyEOpaNsMIr7PVACDb0T8b5g=="
+COSMOS_URI = "your URI here" 
+COSMOS_KEY = "Your Key here"
 COSMOS_DB = "TestResultsDB"
 COSMOS_CONTAINER = "Results"
 
@@ -43,7 +43,7 @@ def upload_test_results_to_cosmos(test_run_id, response_json):
 # Azure DevOps Configuration
 AZURE_ORG = "sethagbavitor3"
 PROJECT = "RobotArmSimulator" 
-PAT = "BwwJZZtKkKMGqjhcPzcIeIorM07pB2JJx4q2n5BvNB72CubolIFSJQQJ99BEACAAAAAAAAAAAAASAZDO2Ez7"  
+PAT = "Your PAT"  
 TEST_PLAN_ID = 1                      # Test Plan ID
 TEST_PLAN_NAME = "RoboTestPlan"         # Test Plan Name
 SUITE_ID = 2                            # Test Suite ID
