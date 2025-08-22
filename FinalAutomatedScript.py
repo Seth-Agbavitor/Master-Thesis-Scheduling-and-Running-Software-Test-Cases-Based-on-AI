@@ -275,7 +275,7 @@ def trigger_new_build():
     build_info = response.json()
     build_id = build_info["id"]
     print(f"✔ Build triggered. Build ID: {build_id}")    
-    # Wait for build to complete
+    # Wait for the build to complete
     build_status_url = f"https://dev.azure.com/{AZURE_ORG}/{PROJECT}/_apis/build/builds/{build_id}?api-version=7.1"
     timeout = timedelta(minutes=5)
     start = datetime.now()
