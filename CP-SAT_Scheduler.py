@@ -11,7 +11,7 @@ df = pd.read_csv("CosmosDB/scheduled_tests_qlearning.csv")
 # --- Rename columns to standardize ---
 df.rename(columns={"Q_value": "priorityScore", "duration_sec": "execTime"}, inplace=True)
 
-# --- Create output directory if needed ---
+# --- Create output directory  ---
 os.makedirs("CosmosDB", exist_ok=True)
 
 # --- Scheduler Setup ---
