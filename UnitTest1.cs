@@ -13,7 +13,7 @@ namespace SimPaintRobot
         [TestInitialize]
         public void Init()
         {
-            robot = new PaintRobot(0.5); // Default failure chance
+            robot = new PaintRobot(0.5); // Default failures chance
         }
 
         private void RandomDelay()
